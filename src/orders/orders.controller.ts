@@ -12,12 +12,15 @@ import { OrdersService } from './orders.service';
 import { NotFoundException } from '@nestjs/common';
 import { CreateOrderDTO } from './dtos/create-order.dto';
 import { UpdateOrderDTO } from './dtos/update-order.dto';
-import { db } from 'src/db';
+import { PrismaService } from 'src/shared/services/prisma.service';
 
 @Controller('orders')
 export class OrdersController {
 
-  constructor(private ordersService: OrdersService) {}
+  constructor(
+    private ordersService: OrdersService,
+    private prismaService: PrismaService
+  ) {}
 
   @Get('/')
   getAll(): any {
@@ -25,40 +28,43 @@ export class OrdersController {
   }
 
   @Get('/:id')
-  getById(@Param('id', new ParseUUIDPipe) id: string) {
-    const order = this.ordersService.getById(id);
+  async getById(@Param('id', new ParseUUIDPipe) id: string) {
+    const order = await this.ordersService.getById(id);
     if (!order) throw new NotFoundException('Order not found');
     return order;
   }
 
   @Delete('/:id')
-  deleteById(@Param('id', new ParseUUIDPipe) id: string ) {
-    if (!this.ordersService.getById(id))
+  async deleteById(@Param('id', new ParseUUIDPipe) id: string ) {
+    if (!(await this.ordersService.getById(id)))
       throw new NotFoundException('Order not found');
-    this.ordersService.deleteById(id);
+    await this.ordersService.deleteById(id);
     return { success: true};
   }
 
   @Post('/')
-  create(@Body() orderData: CreateOrderDTO) {
-    const doesProdExist = db.products.some(p => p.id === orderData.productId);
-    if (!doesProdExist) throw new NotFoundException('Product not found');
-    
-    return this.ordersService.create(orderData);
+  async create(@Body() orderData: CreateOrderDTO) {
+    const products = await this.prismaService.product.findMany();
+    const doesProdExist = products.some(p => p.id === orderData.productId);
+    if (!doesProdExist) throw new NotFoundException('Product for this order not found');
+    return this.prismaService.order.create({
+      data: orderData
+    });
   }
 
   @Put('/:id')
-  update(
-    @Param('id') id: string,
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() orderData: UpdateOrderDTO
   ) {
-    if (!this.ordersService.getById(id))
+    if (!await (this.ordersService.getById(id)))
       throw new NotFoundException('Order not found');
-    const doesProdExist = db.products.some(p => p.id === orderData.productId);
-    if (!doesProdExist) 
-      throw new NotFoundException('Product not found');
 
-    this.ordersService.updateById(id, orderData);
+    const products = await this.prismaService.product.findMany();
+    const doesProdExist = products.some(p => p.id === orderData.productId);
+    if (!doesProdExist) throw new NotFoundException('Product for this order not found');
+
+    await this.ordersService.updateById(id, orderData);
     return { success: true };
   }
 }

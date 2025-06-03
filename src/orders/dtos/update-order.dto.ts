@@ -16,7 +16,7 @@ export class UpdateOrderDTO {
   @IsString()
   client: string;
 
-  @Length(5, 80)
+  @Length(3, 80)
   @Transform(({ value }) => (Array.isArray(value) ? value.join(', ') : ''))
   address: string;
 }
