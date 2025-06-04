@@ -13,11 +13,7 @@ export class UpdateOrderDTO {
   productId: string;
 
   @IsNotEmpty()
-  @Length(2, 40)
+  @IsUUID()
   @IsString()
-  client: string;
-
-  @Length(3, 80)
-  @Transform(({ value }) => (Array.isArray(value) ? value.join(', ') : ''))
-  address: string;
+  clientId: string;
 }
