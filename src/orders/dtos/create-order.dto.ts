@@ -7,6 +7,7 @@ import {
 } from "class-validator";
 
 export class CreateOrderDTO {
+  @IsNotEmpty()
   @IsUUID()
   @IsString()
   productId: string;

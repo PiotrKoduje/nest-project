@@ -17,13 +17,10 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 @Controller('orders')
 export class OrdersController {
 
-  constructor(
-    private ordersService: OrdersService,
-    private prismaService: PrismaService
-  ) {}
+  constructor(private ordersService: OrdersService) {}
 
   @Get('/')
-  getAll(): any {
+  getAll() {
     return this.ordersService.getAll();
   }
 
@@ -44,27 +41,18 @@ export class OrdersController {
 
   @Post('/')
   async create(@Body() orderData: CreateOrderDTO) {
-    const products = await this.prismaService.product.findMany();
-    const doesProdExist = products.some(p => p.id === orderData.productId);
-    if (!doesProdExist) throw new NotFoundException('Product for this order not found');
-    return this.prismaService.order.create({
-      data: orderData
-    });
+    return this.ordersService.create(orderData);
   }
 
   @Put('/:id')
-  async update(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() orderData: UpdateOrderDTO
-  ) {
-    if (!await (this.ordersService.getById(id)))
-      throw new NotFoundException('Order not found');
+   async update(
+     @Param('id', new ParseUUIDPipe()) id: string,
+     @Body() orderData: UpdateOrderDTO
+   ) {
+     if (!await (this.ordersService.getById(id)))
+       throw new NotFoundException('Order not found');
 
-    const products = await this.prismaService.product.findMany();
-    const doesProdExist = products.some(p => p.id === orderData.productId);
-    if (!doesProdExist) throw new NotFoundException('Product for this order not found');
-
-    await this.ordersService.updateById(id, orderData);
-    return { success: true };
-  }
-}
+     await this.ordersService.updateById(id, orderData);
+     return { success: true };
+   }
+ }

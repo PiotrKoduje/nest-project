@@ -7,6 +7,7 @@ import {
 } from "class-validator";
 
 export class UpdateOrderDTO {
+  @IsNotEmpty()
   @IsUUID()
   @IsString()
   productId: string;
